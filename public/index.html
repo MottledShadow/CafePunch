@@ -538,7 +538,7 @@
 
     function selectedMemberId() {
       const v = nameSelect.value;
-      return v ? parseInt(v, 10) : null;
+      return v || null;
     }
 
     // ── Fetch today's record ──
@@ -802,7 +802,7 @@
         // Bind review buttons
         adjReviewList.querySelectorAll('.review-btn').forEach(btn => {
           btn.addEventListener('click', function() {
-            reviewTargetId = parseInt(this.dataset.id);
+            reviewTargetId = this.dataset.id;
             reviewNote.value = '';
             reviewModal.style.display = 'block';
           });
@@ -839,7 +839,7 @@
 
         employeeList.querySelectorAll('.btn-danger').forEach(btn => {
           btn.addEventListener('click', async function() {
-            const id = parseInt(this.dataset.id);
+            const id = this.dataset.id;
             const action = this.dataset.action;
             if (action === 'deactivate') {
               if (!confirm('确定停用该值班人员吗？')) return;
@@ -1033,8 +1033,8 @@
         // Click row → show detail
         statSummary.querySelectorAll('.stat-row').forEach(row => {
           row.addEventListener('click', function() {
-            const mid = parseInt(this.dataset.mid);
-            const memberRecords = records.filter(r => r.member_id === mid);
+            const mid = this.dataset.mid;
+            const memberRecords = records.filter(r => String(r.member_id) === mid);
             const sLabel = { completed: '完整', incomplete: '未完成', abnormal: '时间异常' };
             const sColor = { completed: '#4a8', incomplete: '#c44', abnormal: '#c44' };
             let dh = '<h4 style="font-size:13px;margin-bottom:6px;color:#555">明细</h4>';
