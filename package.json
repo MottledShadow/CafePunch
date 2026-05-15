@@ -1,0 +1,14 @@
+{
+  "name": "cafe-checkin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.13.0",
+    "xlsx": "^0.18.5"
+  }
+}
