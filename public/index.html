@@ -211,8 +211,8 @@
       border-radius: 14px;
     }
 
-    /* Adjustment link */
-    .adj-link-row { text-align: center; padding: 4px 0; }
+    /* Adjustment request */
+    .adj-link-row { text-align: center; padding: 0; margin-top: -2px; }
     .link-button {
       border: none;
       background: transparent;
@@ -225,6 +225,114 @@
     }
     .modal .link-button { flex: none; background: transparent; box-shadow: none; }
     .link-button:active { background: #F0E4D7; }
+    .adj-trigger {
+      color: var(--muted);
+      font-weight: 650;
+      font-size: 12.5px;
+      padding: 7px 10px;
+    }
+    .adj-trigger:active {
+      color: var(--coffee);
+      background: rgba(185, 133, 90, 0.12);
+    }
+    .adj-card {
+      width: min(100%, 420px);
+      margin: 0 auto;
+      background: rgba(255, 253, 248, 0.94);
+      border: 1px solid rgba(232, 216, 200, 0.72);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(58, 27, 14, 0.09);
+    }
+    .adj-head {
+      position: relative;
+      padding-left: 12px;
+      margin-bottom: 16px;
+    }
+    .adj-head::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 3px;
+      width: 4px;
+      height: 34px;
+      border-radius: 999px;
+      background: var(--coffee-soft);
+    }
+    .adj-title {
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--coffee-dark);
+      margin: 0;
+    }
+    .adj-desc {
+      margin-top: 4px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .adj-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .adj-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .adj-field label {
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--coffee-dark);
+    }
+    .adj-field input,
+    .adj-field select {
+      width: 100%;
+      height: 52px;
+      border: 1px solid rgba(232, 216, 200, 0.9);
+      border-radius: 15px;
+      padding: 0 14px;
+      background: #FFFBF5;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+    .adj-field input::placeholder { color: rgba(138, 107, 88, 0.68); }
+    .adj-field input:focus,
+    .adj-field select:focus {
+      border-color: var(--coffee);
+      box-shadow: 0 0 0 3px rgba(109, 43, 10, 0.10);
+    }
+    .adj-actions {
+      display: flex;
+      gap: 12px;
+      padding-top: 2px;
+    }
+    .adj-actions button {
+      height: 48px;
+      border-radius: 15px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .adj-actions .btn-secondary {
+      flex: 1;
+      background: transparent;
+      color: var(--coffee-dark);
+      border: 1px solid var(--line) !important;
+      box-shadow: none;
+    }
+    .adj-actions .btn-primary {
+      flex: 2;
+      background: var(--coffee);
+      color: #fff;
+      border: 1px solid var(--coffee);
+      box-shadow: 0 8px 16px rgba(109, 43, 10, 0.16);
+    }
 
     /* Admin link */
     .admin-link {
@@ -383,6 +491,12 @@
       .btn-main { height: 64px; font-size: 22px; }
       .brand-logo { width: 76px; height: 76px; }
       .main-card { padding: 16px; border-radius: 22px; }
+      .adj-card { padding: 16px; border-radius: 19px; }
+      .adj-title { font-size: 19px; }
+      .adj-form { gap: 13px; }
+      .adj-field input,
+      .adj-field select { height: 50px; border-radius: 14px; }
+      .adj-actions button { height: 48px; }
       .modal { padding: 18px; }
       .stats-controls { flex-wrap: wrap; }
       .stats-controls input { flex-basis: 100%; }
@@ -420,17 +534,20 @@
 
     <!-- Adjustment request -->
     <div class="adj-link-row">
-      <button class="link-button" id="adjLink" type="button">忘记签到/签退？申请补签</button>
+      <button class="link-button adj-trigger" id="adjLink" type="button">忘记签到/签退？申请补签</button>
     </div>
     <div id="adjForm" style="display:none">
-      <div class="card">
-        <h3>补签申请</h3>
-        <div class="form-stack">
-          <div class="field">
+      <div class="adj-card">
+        <div class="adj-head">
+          <h3 class="adj-title">补签申请</h3>
+          <p class="adj-desc">忘记签到或签退时，可在这里提交申请</p>
+        </div>
+        <div class="adj-form">
+          <div class="adj-field">
             <label>补签日期</label>
             <input type="date" id="adjDate">
           </div>
-          <div class="field">
+          <div class="adj-field">
             <label>补签类型</label>
             <select id="adjType">
               <option value="checkin">补签到</option>
@@ -438,19 +555,19 @@
               <option value="both">补签到和补签退</option>
             </select>
           </div>
-          <div class="field" id="adjCheckInGroup">
+          <div class="adj-field" id="adjCheckInGroup">
             <label>补签到时间</label>
             <input type="time" id="adjCheckIn">
           </div>
-          <div class="field" id="adjCheckOutGroup">
+          <div class="adj-field" id="adjCheckOutGroup">
             <label>补签退时间</label>
             <input type="time" id="adjCheckOut">
           </div>
-          <div class="field">
+          <div class="adj-field">
             <label>申请原因</label>
             <input type="text" id="adjReason" placeholder="请填写原因" maxlength="200">
           </div>
-          <div class="btn-row">
+          <div class="adj-actions">
             <button class="btn-secondary" id="adjCancel">取消</button>
             <button class="btn-primary" id="adjSubmit">提交申请</button>
           </div>
