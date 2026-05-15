@@ -3,16 +3,12 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { webcrypto } from 'node:crypto';
-import store from './db/cloudbaseStore.js';
+import store from './db/sqliteStore.js';
 
 const crypto = webcrypto;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3000;
-
-if (!process.env.CLOUDBASE_ENV_ID) {
-  console.warn('CLOUDBASE_ENV_ID is not configured. CloudBase SDK will use its default environment resolution.');
-}
 
 const app = express();
 
@@ -202,7 +198,7 @@ async function authenticate(req) {
 //  GET|POST /api/setup — idempotent
 // ─────────────────────────────────────
 async function handleSetup() {
-  const collections = await store.ensureCollections();
+  const tables = await store.initDatabase();
   const admin = await store.createDefaultAdminIfNotExists(
     '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
     beijingTime(),
@@ -210,8 +206,8 @@ async function handleSetup() {
 
   return {
     ok: true,
-    message: 'CloudBase 数据库已就绪',
-    collections,
+    message: 'SQLite 数据库已就绪',
+    tables,
     default_admin_created: admin.created,
   };
 }

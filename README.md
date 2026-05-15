@@ -1,18 +1,15 @@
-# 咖啡屋值班签到系统
+# 山顶咖啡值班签到系统
 
-这是一个 Express + CloudBase 云数据库版本。当前版本深度绑定 CloudBase 云数据库，CloudBase 负责运行容器和保存业务数据。
-
-未来如果迁移到本地服务器，建议保留 `server.js` 的 API handler，只替换 `db/cloudbaseStore.js` 为本地数据库实现。
+这是一个适合本地服务器、阿里云服务器或 Docker 环境部署的 Node.js 应用。当前 `server` 分支使用 SQLite 本地数据库。
 
 ## 技术栈
 
 - Node.js
 - Express
-- CloudBase 云数据库，使用 `@cloudbase/node-sdk`
+- SQLite
+- `better-sqlite3`
 - `xlsx`
 - 原生 HTML/CSS/JS
-- Dockerfile
-- 环境变量
 
 ## 项目结构
 
@@ -21,14 +18,19 @@ public/
   index.html
   manifest.json
   sw.js
+  assets/
 
 db/
-  cloudbaseStore.js
+  sqliteStore.js
+
+data/
+  .gitkeep
 
 server.js
 package.json
 package-lock.json
 Dockerfile
+docker-compose.yml
 .dockerignore
 .env.example
 README.md
@@ -39,62 +41,31 @@ README.md
 复制 `.env.example` 为 `.env`，并按实际环境配置：
 
 ```env
-CLOUDBASE_ENV_ID=your-cloudbase-env-id
 SETUP_SECRET=replace-with-random-secret
 PORT=3000
-CLOUDBASE_TIMEOUT_MS=2500
-TENCENTCLOUD_SECRETID=optional-for-local-development
-TENCENTCLOUD_SECRETKEY=optional-for-local-development
+SQLITE_DB_PATH=./data/cafepunch.sqlite
 ```
 
-说明：
+不要提交真实 `.env`。
 
-- `CLOUDBASE_ENV_ID`：CloudBase 环境 ID。
-- `SETUP_SECRET`：保护 `/api/setup`。
-- `PORT`：本地或容器监听端口，默认 `3000`。
-- `CLOUDBASE_TIMEOUT_MS`：CloudBase SDK 单次请求超时，默认 `2500`。
-- `TENCENTCLOUD_SECRETID`、`TENCENTCLOUD_SECRETKEY`：本地开发可选。云托管如果支持免密访问，优先不配置密钥。
+## 本地运行
 
-不要把真实 `.env`、`.env.local`、SecretId 或 SecretKey 提交到仓库。
+```bash
+npm install
+npm start
+```
 
-## CloudBase 部署
-
-1. 创建 CloudBase 环境。
-2. 开启 CloudBase 云数据库。
-3. 在云数据库中创建集合：
+打开：
 
 ```text
-members
-records
-adjustment_requests
-admins
+http://localhost:3000
 ```
 
-4. 使用 CloudBase 云托管 / CloudBase Run 部署当前 Express 项目。
-5. 配置环境变量：
+初始化 SQLite 数据库和默认管理员：
 
 ```text
-CLOUDBASE_ENV_ID
-SETUP_SECRET
-PORT=3000
+http://localhost:3000/api/setup?secret=你的SETUP_SECRET
 ```
-
-6. 如果云托管环境不能免密访问 CloudBase 数据库，再配置：
-
-```text
-TENCENTCLOUD_SECRETID
-TENCENTCLOUD_SECRETKEY
-```
-
-7. 部署后访问：
-
-```text
-/api/setup?secret=你的SETUP_SECRET
-```
-
-`/api/setup` 会检查初始化流程，并在没有管理员时创建默认管理员。请先在控制台手动创建上面四个集合；如确实需要尝试自动创建集合，可额外配置 `CLOUDBASE_AUTO_CREATE_COLLECTIONS=true`。
-
-管理员保存在 `admins` 集合的固定文档 `default_admin` 中，避免初始化时扫描空集合导致云托管请求超时。
 
 默认管理员密码：
 
@@ -104,27 +75,50 @@ TENCENTCLOUD_SECRETKEY
 
 上线后请立即在管理面板修改。
 
-## 本地开发
+## Docker 运行
 
 ```bash
-npm install
-npm start
+cp .env.example .env
+docker compose up -d --build
 ```
 
-然后访问：
+Docker Compose 会把本地 `./data` 挂载到容器的 `/app/data`，SQLite 数据文件默认保存为：
 
 ```text
-http://localhost:3000
+data/cafepunch.sqlite
 ```
 
-本地开发访问 CloudBase 数据库时，通常需要在 `.env` 中配置 `CLOUDBASE_ENV_ID`，并按需配置 `TENCENTCLOUD_SECRETID`、`TENCENTCLOUD_SECRETKEY`。
+## 阿里云服务器 / 本地服务器部署
 
-## Docker
+1. 安装 Node.js 20 或使用 Docker。
+2. 上传项目文件。
+3. 配置 `.env`。
+4. 执行 `npm install`。
+5. 执行 `npm start`。
+6. 访问 `/api/setup?secret=你的SETUP_SECRET` 初始化数据库。
+7. 可使用 Nginx 做反向代理和 HTTPS。
 
-```bash
-docker build -t cafe-checkin .
-docker run -d -p 3000:3000 --env-file .env cafe-checkin
+## 数据备份
+
+SQLite 数据文件位于：
+
+```text
+data/cafepunch.sqlite
 ```
+
+备份时复制这个文件即可。运行中如果存在 WAL 文件，也一起备份：
+
+```text
+data/cafepunch.sqlite
+data/cafepunch.sqlite-shm
+data/cafepunch.sqlite-wal
+```
+
+注意：
+
+- 不要删除 `data/` 目录。
+- 不要执行 `docker compose down -v` 删除数据卷。
+- 不要提交 `.env` 和 `data/*.sqlite`。
 
 ## API
 
@@ -152,27 +146,10 @@ PUT  /api/admin/password
 
 ## 数据访问层
 
-CloudBase 数据库操作集中在：
+SQLite 数据库操作集中在：
 
 ```text
-db/cloudbaseStore.js
+db/sqliteStore.js
 ```
 
-`server.js` 不直接调用 `db.collection(...)`。未来迁移到本地服务器时，重写这个 store 即可。
-
-## 验收清单
-
-- `npm install` 成功。
-- `npm start` 能启动。
-- 项目中不再依赖 PostgreSQL 驱动。
-- 项目中不再需要旧版数据库连接串变量。
-- CloudBase 集合可以正常读写。
-- `/api/setup?secret=正确值` 可以初始化默认管理员。
-- 管理员登录正常。
-- 添加值班人员正常。
-- 公共端能加载 active 值班人员。
-- 签到/签退正常。
-- 补签申请和审核正常。
-- 月度统计正常。
-- Excel 导出正常。
-- 项目里没有真实 SecretId / SecretKey。
+`server.js` 继续保留原 API handler 结构。以后如需切换数据库，优先替换 store，不重写业务 API。

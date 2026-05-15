@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    container_name: cafepunch
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - SETUP_SECRET=${SETUP_SECRET}
+      - SQLITE_DB_PATH=/app/data/cafepunch.sqlite
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
