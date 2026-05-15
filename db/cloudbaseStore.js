@@ -2,12 +2,12 @@ import cloudbase from '@cloudbase/node-sdk';
 
 const COLLECTIONS = ['members', 'records', 'adjustment_requests', 'admins'];
 const PAGE_SIZE = 100;
+const SDK_TIMEOUT_MS = Number(process.env.CLOUDBASE_TIMEOUT_MS || 5000);
 
-const initConfig = {};
-
-if (process.env.CLOUDBASE_ENV_ID) {
-  initConfig.env = process.env.CLOUDBASE_ENV_ID;
-}
+const initConfig = {
+  env: process.env.CLOUDBASE_ENV_ID || cloudbase.SYMBOL_CURRENT_ENV,
+  timeout: SDK_TIMEOUT_MS,
+};
 
 if (process.env.TENCENTCLOUD_SECRETID && process.env.TENCENTCLOUD_SECRETKEY) {
   initConfig.secretId = process.env.TENCENTCLOUD_SECRETID;
@@ -43,8 +43,14 @@ function isAlreadyExistsError(error) {
 
 async function ensureCollections() {
   const results = [];
+  const autoCreate = process.env.CLOUDBASE_AUTO_CREATE_COLLECTIONS === 'true';
 
   for (const name of COLLECTIONS) {
+    if (!autoCreate) {
+      results.push({ name, status: 'manual_required' });
+      continue;
+    }
+
     if (typeof db.createCollection !== 'function') {
       results.push({ name, status: 'manual_required' });
       continue;
