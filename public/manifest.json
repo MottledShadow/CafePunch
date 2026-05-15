@@ -1,27 +1,24 @@
 {
-  "name": "咖啡屋值班签到系统",
-  "short_name": "值班签到",
-  "description": "咖啡屋值班签到系统",
+  "name": "山顶咖啡值班签到",
+  "short_name": "山顶签到",
+  "description": "山顶咖啡内部值班签到工具",
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fafaf8",
-  "theme_color": "#3c2415",
+  "background_color": "#F7F1E8",
+  "theme_color": "#6D2B0A",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>☕</text></svg>",
-      "sizes": "100x100",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><text y='152' font-size='150'>☕</text></svg>",
+      "src": "assets/logo-mark.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><text y='410' font-size='400'>☕</text></svg>",
+      "src": "assets/logo-mark.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

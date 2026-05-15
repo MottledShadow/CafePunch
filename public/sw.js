@@ -1,8 +1,10 @@
-const CACHE_NAME = 'cafe-checkin-v4';
+const CACHE_NAME = 'cafe-checkin-v5';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './assets/logo-mark.png',
+  './assets/logo-full.png'
 ];
 
 self.addEventListener('install', event => {
