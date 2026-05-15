@@ -42,7 +42,7 @@ README.md
 CLOUDBASE_ENV_ID=your-cloudbase-env-id
 SETUP_SECRET=replace-with-random-secret
 PORT=3000
-CLOUDBASE_TIMEOUT_MS=5000
+CLOUDBASE_TIMEOUT_MS=2500
 TENCENTCLOUD_SECRETID=optional-for-local-development
 TENCENTCLOUD_SECRETKEY=optional-for-local-development
 ```
@@ -52,7 +52,7 @@ TENCENTCLOUD_SECRETKEY=optional-for-local-development
 - `CLOUDBASE_ENV_ID`：CloudBase 环境 ID。
 - `SETUP_SECRET`：保护 `/api/setup`。
 - `PORT`：本地或容器监听端口，默认 `3000`。
-- `CLOUDBASE_TIMEOUT_MS`：CloudBase SDK 单次请求超时，默认 `5000`。
+- `CLOUDBASE_TIMEOUT_MS`：CloudBase SDK 单次请求超时，默认 `2500`。
 - `TENCENTCLOUD_SECRETID`、`TENCENTCLOUD_SECRETKEY`：本地开发可选。云托管如果支持免密访问，优先不配置密钥。
 
 不要把真实 `.env`、`.env.local`、SecretId 或 SecretKey 提交到仓库。
@@ -93,6 +93,8 @@ TENCENTCLOUD_SECRETKEY
 ```
 
 `/api/setup` 会检查初始化流程，并在没有管理员时创建默认管理员。请先在控制台手动创建上面四个集合；如确实需要尝试自动创建集合，可额外配置 `CLOUDBASE_AUTO_CREATE_COLLECTIONS=true`。
+
+管理员保存在 `admins` 集合的固定文档 `default_admin` 中，避免初始化时扫描空集合导致云托管请求超时。
 
 默认管理员密码：
 

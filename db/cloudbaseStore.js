@@ -2,7 +2,8 @@ import cloudbase from '@cloudbase/node-sdk';
 
 const COLLECTIONS = ['members', 'records', 'adjustment_requests', 'admins'];
 const PAGE_SIZE = 100;
-const SDK_TIMEOUT_MS = Number(process.env.CLOUDBASE_TIMEOUT_MS || 5000);
+const SDK_TIMEOUT_MS = Number(process.env.CLOUDBASE_TIMEOUT_MS || 2500);
+const ADMIN_DOC_ID = 'default_admin';
 
 const initConfig = {
   env: process.env.CLOUDBASE_ENV_ID || cloudbase.SYMBOL_CURRENT_ENV,
@@ -20,6 +21,17 @@ const _ = db.command;
 
 function collection(name) {
   return db.collection(name);
+}
+
+function withDbTimeout(label, promise) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`CloudBase request timed out after ${SDK_TIMEOUT_MS}ms: ${label}`));
+    }, SDK_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 function withId(doc) {
@@ -57,7 +69,7 @@ async function ensureCollections() {
     }
 
     try {
-      await db.createCollection(name);
+      await withDbTimeout(`createCollection:${name}`, db.createCollection(name));
       results.push({ name, status: 'created' });
     } catch (error) {
       if (isAlreadyExistsError(error)) {
@@ -82,7 +94,7 @@ async function queryAll(name, query = {}, options = {}) {
       ref = ref.orderBy(field, direction);
     }
 
-    const res = await ref.skip(offset).limit(PAGE_SIZE).get();
+    const res = await withDbTimeout(`${name}.queryAll`, ref.skip(offset).limit(PAGE_SIZE).get());
     const data = res.data || [];
     results.push(...data);
 
@@ -100,7 +112,7 @@ async function queryOne(name, query = {}, options = {}) {
     ref = ref.orderBy(field, direction);
   }
 
-  const res = await ref.limit(1).get();
+  const res = await withDbTimeout(`${name}.queryOne`, ref.limit(1).get());
   return withId((res.data || [])[0] || null);
 }
 
@@ -108,7 +120,7 @@ async function getById(name, id) {
   if (!id) return null;
 
   try {
-    const res = await collection(name).doc(String(id)).get();
+    const res = await withDbTimeout(`${name}.doc(${id}).get`, collection(name).doc(String(id)).get());
     return withId(firstDoc(res.data));
   } catch (error) {
     const text = String(error?.message || error?.code || error || '').toLowerCase();
@@ -118,14 +130,19 @@ async function getById(name, id) {
 }
 
 async function addDocument(name, data) {
-  const res = await collection(name).add(data);
+  const res = await withDbTimeout(`${name}.add`, collection(name).add(data));
   const id = res.id || res._id;
+  return getById(name, id);
+}
+
+async function setDocument(name, id, data) {
+  await withDbTimeout(`${name}.doc(${id}).set`, collection(name).doc(String(id)).set(data));
   return getById(name, id);
 }
 
 async function updateDocument(name, id, data) {
   try {
-    await collection(name).doc(String(id)).update(data);
+    await withDbTimeout(`${name}.doc(${id}).update`, collection(name).doc(String(id)).update(data));
   } catch (error) {
     const text = String(error?.message || error?.code || error || '').toLowerCase();
     if (text.includes('not found') || text.includes('document')) return null;
@@ -240,18 +257,19 @@ export async function updateAdjustmentRequest(id, data) {
 }
 
 export async function getAdmin() {
-  return queryOne('admins', {}, { orderBy: [['created_at', 'asc']] });
+  return getById('admins', ADMIN_DOC_ID);
 }
 
 export async function getAdminByToken(token) {
-  return queryOne('admins', { token });
+  const admin = await getAdmin();
+  return admin && admin.token === token ? admin : null;
 }
 
 export async function createDefaultAdminIfNotExists(passwordHash, now) {
   const existing = await getAdmin();
   if (existing) return { created: false, admin: existing };
 
-  const admin = await addDocument('admins', {
+  const admin = await setDocument('admins', ADMIN_DOC_ID, {
     password_hash: passwordHash,
     token: null,
     created_at: now,
@@ -265,7 +283,7 @@ export async function updateAdminPassword(passwordHash, now) {
   const admin = await getAdmin();
   if (!admin) return null;
 
-  return updateDocument('admins', admin._id, {
+  return updateDocument('admins', ADMIN_DOC_ID, {
     password_hash: passwordHash,
     token: null,
     updated_at: now,
@@ -276,7 +294,7 @@ export async function updateAdminToken(token, now) {
   const admin = await getAdmin();
   if (!admin) return null;
 
-  return updateDocument('admins', admin._id, {
+  return updateDocument('admins', ADMIN_DOC_ID, {
     token,
     updated_at: now,
   });
